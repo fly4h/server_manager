@@ -72,6 +72,23 @@ python tools/fake-docker.py 2375
 DOCKER_HOST=tcp://127.0.0.1:2375 go run ./cmd/server
 ```
 
+### 网络受限时推送代码：`tools/gh-push.py`
+
+某些网络环境下 `git push` 的大 packfile POST 会被中断（表现为 `Recv failure: Connection was reset`
+或长时间无响应），而 REST API 的小请求仍然可用。该脚本改用 GitHub Git Data API 上传：
+读取 **git index** 中的内容（因此自动遵循 `.gitattributes` 的 LF 规范化），
+一次性 create-tree → create-commit → update-ref。
+
+```bash
+python tools/gh-push.py --token <PAT> --repo owner/name --branch main \
+    --message "your commit message" \
+    --host-ip 20.205.243.168      # 本机 DNS 解析不出 api.github.com 时显式指定
+```
+
+常用参数：`--parent <sha>` 指定父提交（配合 `--force` 可覆盖上一次提交）、
+`--host-ip` 绕过 DNS。注意这是**全量覆盖式**提交（以 index 内容为准），
+删除的文件也会同步删除。
+
 ---
 
 ## 环境变量
@@ -178,7 +195,7 @@ server-manager/
 │   ├── dockerapi/                Docker Engine REST API 客户端
 │   └── activity/                 审计日志
 ├── web/                          React + TS + Vite + Ant Design + xterm.js
-├── tools/                        fake-ssh / fake-docker，无真机时的链路验证工具
+├── tools/                        fake-ssh / fake-docker（链路验证）、gh-push.py（API 方式推送）
 ├── .github/workflows/image.yml   跨平台编译校验 + 多架构镜像构建（GHCR）
 ├── Dockerfile                    三阶段构建，运行镜像仅含静态二进制
 ├── docker-compose.yml
