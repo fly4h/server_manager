@@ -1,0 +1,34 @@
+# 云原生构建（CNB / cnb.cool）流水线
+#
+# 作用：main 分支有 push 时构建 Docker 镜像并推送到 CNB 制品库。
+# 前置：仓库托管在 cnb.cool，无需配置任何凭据 —— 声明 services: docker 后
+#       平台会启动 dind、注入 docker CLI 并自动登录 CNB 制品库。
+# 免费额度：云原生构建 160 核时/月（8 核节点约 20 小时），个人项目用不完。
+#
+# 内置变量：
+#   CNB_DOCKER_REGISTRY    制品库地址
+#   CNB_REPO_SLUG_LOWERCASE 仓库路径（小写）
+#   CNB_COMMIT / CNB_COMMIT_SHORT 提交号
+#
+# 注意：镜像为 linux/amd64。arm64 需走 buildx + QEMU，会慢数倍，按需再加。
+
+main:
+  push:
+    - name: build-and-push-image
+      # 凡使用 docker build / push，必须在流水线顶层声明 docker 服务
+      services:
+        - docker
+      stages:
+        - name: build
+          script: |
+            SHORT=$(echo -n "$CNB_COMMIT" | cut -c1-7)
+            IMAGE="$CNB_DOCKER_REGISTRY/$CNB_REPO_SLUG_LOWERCASE"
+            echo "building $IMAGE:$SHORT"
+            docker build -t "$IMAGE:$SHORT" -t "$IMAGE:latest" .
+        - name: push
+          script: |
+            SHORT=$(echo -n "$CNB_COMMIT" | cut -c1-7)
+            IMAGE="$CNB_DOCKER_REGISTRY/$CNB_REPO_SLUG_LOWERCASE"
+            docker push "$IMAGE:$SHORT"
+            docker push "$IMAGE:latest"
+            echo "pushed $IMAGE:$SHORT"

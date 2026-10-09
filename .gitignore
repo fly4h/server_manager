@@ -1,0 +1,12 @@
+bin/
+data/
+*.db
+*.db-wal
+*.db-shm
+web/node_modules/
+web/.vite/
+web/tsconfig.tsbuildinfo
+node_modules/
+
+# build output
+web/dist/

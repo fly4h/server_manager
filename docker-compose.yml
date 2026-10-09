@@ -1,0 +1,22 @@
+services:
+  server-manager:
+    build: .
+    image: server-manager:1.0.0
+    container_name: server-manager
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+      # read-only docker socket: required only for the Docker module
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      APP_PORT: "8080"
+      APP_DATA_DIR: "/data"
+      APP_DATABASE: "/data/app.db"
+      APP_ENV: "prod"
+      APP_ADMIN_USERNAME: "admin"
+      APP_ADMIN_PASSWORD: "please-change-me"
+      # 32+ byte random string; leave empty to auto-generate into /data/.encryption_key
+      APP_ENCRYPTION_KEY: ""
+      DOCKER_HOST: "unix:///var/run/docker.sock"

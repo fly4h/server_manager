@@ -1,0 +1,9 @@
+web/node_modules
+web/dist
+web/.vite
+bin
+data
+.git
+.gitignore
+*.db
+*.log
